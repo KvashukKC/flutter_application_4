@@ -1,26 +1,29 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:math';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Для работы с Cubit
+import 'dart:math'; // Для математических вычислений
 
-import 'equation_state.dart';
+import 'equation_state.dart'; // Импорт состояний
 
 class EquationCubit extends Cubit<EquationState> {
+  // Конструктор - инициализируем состояние формой ввода
   EquationCubit() : super(EquationInput(
     aError: null,
     bError: null,
     cError: null,
     isAgreed: false,
-  )); // Инициализируем сразу состоянием ввода
+  ));
 
+  // Приватные переменные для хранения текущих ошибок и состояния чекбокса
   String? _aError;
   String? _bError;
   String? _cError;
   bool _isAgreed = false;
 
+  // Валидация введенных данных
   void validateInput(String a, String b, String c) {
-    _aError = null;
-    _bError = null;
-    _cError = null;
+    // Сбрасываем предыдущие ошибки
+    _aError = _bError = _cError = null;
 
+    // Валидация коэффициента A
     if (a.isEmpty) {
       _aError = 'Поле не может быть пустым';
     } else if (double.tryParse(a) == null) {
@@ -29,18 +32,21 @@ class EquationCubit extends Cubit<EquationState> {
       _aError = 'Коэффициент a не может быть 0';
     }
 
+    // Валидация коэффициента B
     if (b.isEmpty) {
       _bError = 'Поле не может быть пустым';
     } else if (double.tryParse(b) == null) {
       _bError = 'Введите число';
     }
 
+    // Валидация коэффициента C
     if (c.isEmpty) {
       _cError = 'Поле не может быть пустым';
     } else if (double.tryParse(c) == null) {
       _cError = 'Введите число';
     }
 
+    // Переходим в состояние ввода с обновленными ошибками
     emit(EquationInput(
       aError: _aError,
       bError: _bError,
@@ -49,6 +55,7 @@ class EquationCubit extends Cubit<EquationState> {
     ));
   }
 
+  // Изменение состояния чекбокса согласия
   void toggleAgreement(bool? value) {
     _isAgreed = value ?? false;
     emit(EquationInput(
@@ -59,10 +66,10 @@ class EquationCubit extends Cubit<EquationState> {
     ));
   }
 
+  // Вычисление корней уравнения
   void calculate(String a, String b, String c) {
-    if (_aError != null || _bError != null || _cError != null || !_isAgreed) {
-      return;
-    }
+    // Если есть ошибки или нет согласия - не вычисляем
+    if (_aError != null || _bError != null || _cError != null || !_isAgreed) return;
 
     final double aVal = double.parse(a);
     final double bVal = double.parse(b);
@@ -71,24 +78,24 @@ class EquationCubit extends Cubit<EquationState> {
     final discriminant = bVal * bVal - 4 * aVal * cVal;
     String result;
 
+    // Вычисляем корни в зависимости от дискриминанта
     if (discriminant > 0) {
+      // Два действительных корня
       final x1 = (-bVal + sqrt(discriminant)) / (2 * aVal);
       final x2 = (-bVal - sqrt(discriminant)) / (2 * aVal);
-      result = 'Два действительных корня:\n'
-          'x₁ = ${x1.toStringAsFixed(2)}\n'
-          'x₂ = ${x2.toStringAsFixed(2)}';
+      result = 'Два действительных корня:\nx₁ = ${x1.toStringAsFixed(2)}\nx₂ = ${x2.toStringAsFixed(2)}';
     } else if (discriminant == 0) {
+      // Один действительный корень
       final x = -bVal / (2 * aVal);
-      result = 'Один действительный корень:\n'
-          'x = ${x.toStringAsFixed(2)}';
+      result = 'Один действительный корень:\nx = ${x.toStringAsFixed(2)}';
     } else {
+      // Комплексные корни
       final realPart = -bVal / (2 * aVal);
       final imaginaryPart = sqrt(-discriminant) / (2 * aVal);
-      result = 'Два комплексных корня:\n'
-          'x₁ = ${realPart.toStringAsFixed(2)} + ${imaginaryPart.toStringAsFixed(2)}i\n'
-          'x₂ = ${realPart.toStringAsFixed(2)} - ${imaginaryPart.toStringAsFixed(2)}i';
+      result = 'Два комплексных корня:\nx₁ = ${realPart.toStringAsFixed(2)} + ${imaginaryPart.toStringAsFixed(2)}i\nx₂ = ${realPart.toStringAsFixed(2)} - ${imaginaryPart.toStringAsFixed(2)}i';
     }
 
+    // Переходим в состояние с результатами
     emit(EquationResult(
       a: aVal,
       b: bVal,
@@ -97,6 +104,7 @@ class EquationCubit extends Cubit<EquationState> {
     ));
   }
 
+  // Возврат к форме ввода
   void returnToInput() {
     emit(EquationInput(
       aError: _aError,
